@@ -1,0 +1,50 @@
+{
+  "name": "cackle",
+  "version": "0.0.1",
+  "description": "A library to batch and optimize graphql queries and mutations",
+  "main": "src/main.ts",
+  "scripts": {
+    "lint": "npm run prettier && npm run lint-ts",
+    "lint-ts": "eslint ./src/**/*.ts",
+    "prettier": "prettier --config .prettierrc --write \"src/**/*.ts\" --loglevel error",
+    "test": "jest --watchAll --coverage --config=configs/jest.json",
+    "test-once": "jest --coverage --config=configs/jest.json",
+    "build": "tsc --watch",
+    "build-once": "tsc",
+    "bundle": "rollup dist/main.js --file dist/bundle.js --format umd --name cackle"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/worbunkel/cackle.git"
+  },
+  "keywords": [
+    "graphql",
+    "batching",
+    "batch",
+    "group",
+    "optimize",
+    "query",
+    "mutation"
+  ],
+  "author": "Luke Brown (worbunkel@gmail.com)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/worbunkel/cackle/issues"
+  },
+  "homepage": "https://github.com/worbunkel/cackle#readme",
+  "dependencies": {
+    "graphql": "^14.4.2",
+    "graphql-request": "^1.8.2",
+    "graphql-tag": "^2.10.1"
+  },
+  "devDependencies": {
+    "@types/graphql": "^14.2.2",
+    "@types/lodash": "^4.14.136",
+    "@typescript-eslint/eslint-plugin": "^1.11.0",
+    "eslint": "^6.0.1",
+    "eslint-config-prettier": "^6.0.0",
+    "prettier": "^1.18.2",
+    "rollup": "^1.16.6",
+    "typescript": "^3.5.2"
+  }
+}

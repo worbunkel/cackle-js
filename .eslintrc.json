@@ -1,0 +1,63 @@
+{
+  "parser": "@typescript-eslint/parser",
+  "plugins": [
+    "@typescript-eslint"
+  ],
+  "extends": [
+    "prettier",
+    "prettier/@typescript-eslint"
+  ],
+  "parserOptions": {
+    "sourceType": "module",
+    "ecmaFeatures": {
+      "modules": true
+    },
+    "project": "./tsconfig.json"
+  },
+  "rules": {
+    "arrow-body-style": [
+      "error",
+      "as-needed"
+    ],
+    "camelcase": "error",
+    "consistent-return": "error",
+    "constructor-super": "error",
+    "default-case": "warn",
+    "dot-notation": "error",
+    "eqeqeq": "error",
+    "no-await-in-loop": "error",
+    "no-cond-assign": "error",
+    "no-console": [
+      "warn",
+      {
+        "allow": [
+          "error"
+        ]
+      }
+    ],
+    "no-const-assign": "error",
+    "no-delete-var": "error",
+    "no-dupe-args": "error",
+    "no-extra-semi": "error",
+    "no-fallthrough": "error",
+    "no-implicit-globals": "error",
+    "no-invalid-this": "error",
+    "no-multi-spaces": "error",
+    "no-new-symbol": "error",
+    "no-regex-spaces": "error",
+    "no-return-await": "error",
+    "no-self-assign": "error",
+    "no-this-before-super": "error",
+    "no-undef-init": "error",
+    "no-unsafe-negation": "error",
+    "@typescript-eslint/no-unused-vars": "error",
+    "no-useless-concat": "error",
+    "no-useless-return": "error",
+    "no-var": "error",
+    "object-shorthand": "error",
+    "prefer-const": "error",
+    "require-await": "error",
+    "semi": "error",
+    "yoda": "error"
+  }
+}
