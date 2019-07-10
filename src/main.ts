@@ -1,21 +1,21 @@
 import gql from 'graphql-tag';
-import { graphql, GraphQLSchema, GraphQLObjectType, GraphQLString } from 'graphql';
+// import { graphql, GraphQLSchema, GraphQLObjectType, GraphQLString } from 'graphql';
 import { print } from 'graphql/language/printer';
 import _ from 'lodash';
 
-const schema = new GraphQLSchema({
-  query: new GraphQLObjectType({
-    name: 'RootQueryType',
-    fields: {
-      hello: {
-        type: GraphQLString,
-        resolve() {
-          return 'world';
-        },
-      },
-    },
-  }),
-});
+// const schema = new GraphQLSchema({
+//   query: new GraphQLObjectType({
+//     name: 'RootQueryType',
+//     fields: {
+//       hello: {
+//         type: GraphQLString,
+//         resolve() {
+//           return 'world';
+//         },
+//       },
+//     },
+//   }),
+// });
 
 const createDeepNames = (selections: any[]): any[] => {
   return _.flatMap(selections, selection => {
@@ -71,15 +71,16 @@ createQuery(secondQuery);
 const processQueries = async () => {
   const queryDefinitionGroups = _.map(Requests, ({ AST }) => {
     const definitions = _.get(AST, 'definitions');
-    // console.log(definitions);
     return _.filter(definitions, definition => _.get(definition, 'operation') === 'query');
   });
-  // console.log(queryDefinitionGroups);
+  console.log('queryDefinitionGroups');
+  console.log(queryDefinitionGroups);
   const selections = _.map(queryDefinitionGroups, queryDefinitionGroup =>
     _.flatMap(queryDefinitionGroup, def => {
       return def.selectionSet.selections;
     }),
   );
+  console.log(selections);
   const deepNames = _.map(selections, createDeepNames);
   console.log('DEEP NAMES:\n', deepNames);
   const uniqueNames = _.uniq(...deepNames);
@@ -89,26 +90,11 @@ const processQueries = async () => {
   console.log(newQueryObject);
   const newQuery = printObjectQuery(newQueryObject);
   const finalAST = gql(newQuery);
-  // const finalQueryDefinition = {
-  //   kind: 'OperationDefinition',
-  //   operation: 'query',
-  //   variableDefinitions: [] as any[],
-  //   directives: [] as any[],
-  //   selectionSet: {
-  //     kind: 'SelectionSet',
-  //     selections: combinedSelections,
-  //   },
-  // };
-  // const newAST = {
-  //   kind: 'Document',
-  //   definitions: [finalQueryDefinition],
-  // };
   const query = print(finalAST as any);
 
   console.log('\nQUERY:\n', query);
-  const result = await graphql(schema, query);
-  console.log('RESULT:\n', JSON.stringify(result, null, 2));
-  ASTs = [];
+
+  Requests = [];
 };
 
 processQueries();
