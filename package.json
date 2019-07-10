@@ -11,7 +11,9 @@
     "test-once": "jest --coverage --config=configs/jest.json",
     "build": "tsc --watch",
     "build-once": "tsc",
-    "bundle": "rollup dist/main.js --file dist/bundle.js --format umd --name cackle"
+    "bundle": "rollup dist/main.js --file dist/bundle.js --format umd --name cackle",
+    "run": "nodemon dist/main.js",
+    "run-once": "node dist/main.js"
   },
   "repository": {
     "type": "git",
