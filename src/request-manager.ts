@@ -1,13 +1,13 @@
 import gql from 'graphql-tag';
 import _ from 'lodash';
-import { print } from 'graphql/language/printer';
-import { createDeepNamesAndAliases, printObjectQuery } from './utils';
-
-type Request = {
-  AST: any;
-  resolve: (value?: any) => void;
-  reject: (val?: any) => void;
-};
+import {
+  createDeepNamesAndAliases,
+  Request,
+  createQueryDefinitionGroups,
+  createSelections,
+  createQueryFromUniqueNames,
+  createUniqueNames,
+} from './utils';
 
 export class RequestManager {
   requests: Array<Request> = [];
@@ -29,7 +29,6 @@ export class RequestManager {
   }
 
   async createQuery(query: any) {
-    console.log(`Query Created: ${new Date().getTime()}`);
     this.resetInterval();
     return new Promise((resolve, reject) => {
       try {
@@ -46,35 +45,14 @@ export class RequestManager {
   }
 
   async processQueries() {
-    if (_.isEqual(this.requests, [])) {
+    if (_.size(this.requests) === 0) {
       return;
     }
-    console.log(`Started Processing Queries: ${new Date().getTime()}`);
-    const queryDefinitionGroups = _.map(this.requests, ({ AST }) => {
-      const definitions = _.get(AST, 'definitions');
-      return _.filter(definitions, definition => _.get(definition, 'operation') === 'query');
-    });
-    console.log('queryDefinitionGroups');
-    console.log(queryDefinitionGroups);
-    const selections = _.map(queryDefinitionGroups, queryDefinitionGroup =>
-      _.flatMap(queryDefinitionGroup, def => {
-        return def.selectionSet.selections;
-      }),
-    );
-    console.log(selections);
+    const queryDefinitionGroups = createQueryDefinitionGroups(this.requests);
+    const selections = createSelections(queryDefinitionGroups);
     const { deepNames, deepAliases } = createDeepNamesAndAliases(selections);
-    console.log('DEEP NAMES:\n', deepNames);
-    console.log('DEEP ALIASES:\n', deepAliases);
-    const uniqueNames = _.uniq(_.flatten(deepNames));
-    console.log('Unique Names:\n', uniqueNames);
-    const newQueryObject = {};
-    _.each(uniqueNames, uniqueName => _.set(newQueryObject, uniqueName, ''));
-    console.log(newQueryObject);
-    const newQuery = printObjectQuery(newQueryObject);
-    const finalAST = gql(newQuery);
-    const query = print(finalAST as any);
-
-    console.log('\nQUERY:\n', query);
+    const uniqueNames = createUniqueNames(deepNames);
+    const query = createQueryFromUniqueNames(uniqueNames);
 
     try {
       const response = await this.functionToCallWithQuery(query);
@@ -82,7 +60,6 @@ export class RequestManager {
       if (!result) {
         throw new Error('Response of requestFunction did not match type: { data: any }');
       }
-      console.log(JSON.stringify(result, null, 2));
 
       _.each(deepNames, (deepNameGroup, index) => {
         const deepAliasGroup = deepAliases[index];
@@ -94,11 +71,9 @@ export class RequestManager {
         this.requests[index].resolve(returnObj);
       });
     } catch (err) {
-      console.error('Error making request:', err);
       _.each(this.requests, request => request.reject(err));
     }
 
     this.requests = [];
-    console.log('Processed Queries');
   }
 }

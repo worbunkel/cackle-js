@@ -1,6 +1,27 @@
 import _ from 'lodash';
+import gql from 'graphql-tag';
+import { print } from 'graphql/language/printer';
 
-export const createDeepNames = (selections: any[]): any[] => {
+export type Request = {
+  AST: any;
+  resolve: (value?: any) => void;
+  reject: (val?: any) => void;
+};
+
+export const createQueryDefinitionGroups = (requests: Request[]) =>
+  _.map(requests, ({ AST }) => {
+    const definitions = _.get(AST, 'definitions');
+    return _.filter(definitions, definition => _.get(definition, 'operation') === 'query');
+  });
+
+export const createSelections = (queryDefinitionGroups: any[][]) =>
+  _.map(queryDefinitionGroups, queryDefinitionGroup =>
+    _.flatMap(queryDefinitionGroup, def => {
+      return def.selectionSet.selections;
+    }),
+  );
+
+const createDeepNames = (selections: any[]): any[] => {
   return _.flatMap(selections, selection => {
     const selectionSet = selection.selectionSet;
     if (!selectionSet) {
@@ -10,7 +31,7 @@ export const createDeepNames = (selections: any[]): any[] => {
   });
 };
 
-export const createDeepAliases = (selections: any[]): any[] => {
+const createDeepAliases = (selections: any[]): any[] => {
   return _.flatMap(selections, selection => {
     const selectionSet = selection.selectionSet;
     const alias = _.get(selection, 'alias.value', selection.name.value);
@@ -30,6 +51,17 @@ export const createDeepNamesAndAliases = (selections: any[]): { deepNames: any[]
 export const printObjectQuery = (objectQuery: any): string => `{
   ${_.join(_.map(objectQuery, (value, key) => (value === '' ? key : `${key} ${printObjectQuery(value)}`)), '\n')}
 }`;
+
+export const createUniqueNames = (deepNames: string[]) => _.uniq(_.flatten(deepNames));
+
+export const createQueryFromUniqueNames = (uniqueNames: any[]) => {
+  const newQueryObject = {};
+  _.each(uniqueNames, uniqueName => _.set(newQueryObject, uniqueName, ''));
+  const newQuery = printObjectQuery(newQueryObject);
+  const finalAST = gql(newQuery);
+  const query = print(finalAST as any);
+  return query;
+};
 
 export const delay = async (durationInMS: number) =>
   new Promise(resolve => {
