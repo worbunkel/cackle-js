@@ -30,3 +30,10 @@ export const createDeepNamesAndAliases = (selections: any[]): { deepNames: any[]
 export const printObjectQuery = (objectQuery: any): string => `{
   ${_.join(_.map(objectQuery, (value, key) => (value === '' ? key : `${key} ${printObjectQuery(value)}`)), '\n')}
 }`;
+
+export const delay = async (durationInMS: number) =>
+  new Promise(resolve => {
+    setTimeout(() => {
+      resolve();
+    }, durationInMS);
+  });
