@@ -1,5 +1,8 @@
 import _ from 'lodash';
 import { RequestManager } from './request-manager';
+import { delay } from './utils';
+import { graphql } from 'graphql';
+import { testSchema } from './test-schema';
 
 const firstQuery = `
   query {
@@ -23,14 +26,29 @@ const secondQuery = `
   }
 `;
 
+const doRequest = async (queryId: string, query: string, requestManager: RequestManager) => {
+  const result = await requestManager.createQuery(query);
+  console.log(`${queryId} Result (${new Date().getTime()}):\n${JSON.stringify(result, null, 2)}`);
+};
+
 const createAndProcessQueries = async () => {
-  const requestManager = new RequestManager();
-  const firstPromise = requestManager.createQuery(firstQuery);
-  const secondPromise = requestManager.createQuery(secondQuery);
-  requestManager.processQueries();
-  const finalResult = await Promise.all([firstPromise, secondPromise]);
-  console.log(JSON.stringify({ finalResult }, null, 2));
-  return finalResult;
+  const graphqlRequest = async (query: string) => {
+    try {
+      return graphql(testSchema, query);
+    } catch (err) {
+      console.error(err);
+      return {};
+    }
+  };
+  const requestManager = new RequestManager(graphqlRequest, 300);
+  doRequest('First', firstQuery, requestManager);
+  doRequest('Second', secondQuery, requestManager);
+  await delay(200);
+  doRequest('Third', firstQuery, requestManager);
+  await delay(200);
+  doRequest('Fourth', firstQuery, requestManager);
+  await delay(400);
+  doRequest('Fifth', `${firstQuery}}`, requestManager);
 };
 
 createAndProcessQueries();
