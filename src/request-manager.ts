@@ -5,8 +5,14 @@ import { print } from 'graphql/language/printer';
 import { createDeepNamesAndAliases, printObjectQuery } from './utils';
 import { testSchema } from './test-schema';
 
+type Request = {
+  AST: any;
+  resolve: (value?: any) => void;
+  reject: (val?: any) => void;
+};
+
 export class RequestManager {
-  requests: Array<{ AST: any; resolve: (value?: any) => void; reject: (val?: any) => void }> = [];
+  requests: Array<Request> = [];
   constructor() {
     this.requests = [];
   }
