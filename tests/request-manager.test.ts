@@ -72,6 +72,40 @@ describe('Request Manager', () => {
     ]);
   });
 
+  it('Can do two queries with arguments', async () => {
+    const queryWithOneArgument = `
+    {
+      thingWithArgs(argument1: "test"){
+        thingInside
+      }
+    }
+    `;
+    const queryWithOneArgument2 = `
+    {
+      thingWithArgs(argument1: "test"){
+        otherThingInside
+      }
+    }
+    `;
+
+    const requestManager = new RequestManager(graphqlRequest);
+    const result1 = requestManager.createQuery(queryWithOneArgument);
+    const result2 = requestManager.createQuery(queryWithOneArgument2);
+    const finalResult = await Promise.all([result1, result2]);
+    expect(finalResult).toEqual([
+      {
+        thingWithArgs: {
+          thingInside: 'thingInside',
+        },
+      },
+      {
+        thingWithArgs: {
+          otherThingInside: 'otherThingInside',
+        },
+      },
+    ]);
+  });
+
   it('Can batch two queries so that only one request is made', async () => {
     let count = 0;
     const graphqlRequestWithCounter = async (query: string) => {

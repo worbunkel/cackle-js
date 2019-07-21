@@ -24,6 +24,18 @@ const testType = new GraphQLObjectType({
   },
 });
 
+const thingWithArgsType = new GraphQLObjectType({
+  name: 'thingWithArgs',
+  fields: {
+    thingInside: {
+      type: GraphQLString,
+    },
+    otherThingInside: {
+      type: GraphQLString,
+    },
+  },
+});
+
 export const testSchema = new GraphQLSchema({
   query: new GraphQLObjectType({
     name: 'RootQueryType',
@@ -44,6 +56,24 @@ export const testSchema = new GraphQLSchema({
             otherThing: {
               moreTest: 'otherThing moreTest',
             },
+          };
+        },
+      },
+      thingWithArgs: {
+        name: 'thingWithArgs',
+        type: thingWithArgsType,
+        args: {
+          argument1: {
+            type: GraphQLString,
+          },
+          argument2: {
+            type: GraphQLString,
+          },
+        },
+        resolve(source, args) {
+          return {
+            thingInside: 'thingInside',
+            otherThingInside: 'otherThingInside',
           };
         },
       },

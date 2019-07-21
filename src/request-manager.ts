@@ -1,13 +1,6 @@
 import gql from 'graphql-tag';
 import _ from 'lodash';
-import {
-  createDeepNamesAndAliases,
-  Request,
-  createQueryDefinitionGroups,
-  createSelections,
-  createQueryFromUniqueNames,
-  createUniqueNames,
-} from './utils';
+import { Request, createQueryNamesAndAliasesFromASTs } from './utils';
 
 export class RequestManager {
   requests: Array<Request> = [];
@@ -48,11 +41,9 @@ export class RequestManager {
     if (_.size(this.requests) === 0) {
       return;
     }
-    const queryDefinitionGroups = createQueryDefinitionGroups(this.requests);
-    const selections = createSelections(queryDefinitionGroups);
-    const { deepNames, deepAliases } = createDeepNamesAndAliases(selections);
-    const uniqueNames = createUniqueNames(deepNames);
-    const query = createQueryFromUniqueNames(uniqueNames);
+
+    const ASTs = _.map(this.requests, request => request.AST);
+    const { query, deepNames, deepAliases } = createQueryNamesAndAliasesFromASTs(ASTs);
 
     try {
       const response = await this.functionToCallWithQuery(query);
@@ -65,7 +56,7 @@ export class RequestManager {
         const deepAliasGroup = deepAliases[index];
         const returnObj = {};
         _.each(deepAliasGroup, (deepAlias, aliasIndex) => {
-          const deepName = deepNameGroup[aliasIndex];
+          const deepName = _.replace(deepNameGroup[aliasIndex], /\:.+\)/g, '');
           _.set(returnObj, deepAlias, _.get(result, deepName));
         });
         this.requests[index].resolve(returnObj);

@@ -7,6 +7,9 @@ import {
 } from '../dist/utils';
 import gql from 'graphql-tag';
 import _ from 'lodash';
+import { RequestManager } from '../src/request-manager';
+import { graphql } from 'graphql';
+import { testSchema } from '../src/test-schema';
 
 const firstQuery = `
   query {
@@ -39,6 +42,7 @@ describe('utils', () => {
       });
     });
   });
+
   describe('createQueryFromUniqueNames', () => {
     it('should combine unique names into a query', () => {
       const uniqueNames = ['hello', 'test.thing', 'test.thing2', 'test.otherThing.moreTest'];
@@ -57,6 +61,89 @@ describe('utils', () => {
 }
 `;
       expect(query).toEqual(expectedResult);
+    });
+  });
+
+  describe('createQueryNamesAndAliasesFromASTs', () => {
+    const queryWithOneArgument = `
+    {
+      thingWithArgs(argument1: "test"){
+        thingInside
+      }
+    }
+    `;
+
+    const queryWithOneArgument2 = `
+    {
+      thingWithArgs(argument1: "test2"){
+        thingInside
+      }
+    }
+    `;
+
+    const queryWithOneArgumentAndAlias = `
+    {
+      thingWithArgs1: thingWithArgs(argument1: "test"){
+        otherThingInside
+      }
+    }`;
+
+    const queryWithTwoArguments = `
+    {
+      thingWithArgs(argument1: "noAlias", argument2: "testAgain"){
+        thingInside
+      }
+    }
+    `;
+
+    const queryWithTwoArguments2 = `
+    {
+      thingWithArgs(argument1: "test2", argument2: "testAgain"){
+        thingInside
+      }
+    }
+    `;
+
+    const queriesWithOneArgumentMatched = [queryWithOneArgument, queryWithOneArgument];
+    const queriesWithOneArgumentUnmatched = [queryWithOneArgument, queryWithOneArgument2];
+    const queriesWithOneArgumentMatchedAndAlias = [queryWithOneArgument, queryWithOneArgumentAndAlias];
+    const queriesWithTwoArgumentsMatched = [queryWithTwoArguments, queryWithTwoArguments];
+    const queriesWithTwoArgumentsUnmatched = [queryWithTwoArguments, queryWithTwoArguments2];
+    const queriesWithAllVariations = [
+      queryWithOneArgument,
+      queryWithOneArgument2,
+      queryWithOneArgumentAndAlias,
+      queryWithTwoArguments,
+      queryWithTwoArguments2,
+    ];
+    const getRequestQuery = async (queries: string[]) => {
+      let requestQuery = '';
+      const queryChecker = async (query: string) => {
+        requestQuery = query;
+        return { data: {} };
+      };
+      const requestManager = new RequestManager(queryChecker);
+      const resultPromises = _.map(queries, query => requestManager.createQuery(query));
+      await Promise.all(resultPromises);
+      return requestQuery;
+    };
+    it('Can handle queries one argument matched', async () => {
+      expect(await getRequestQuery(queriesWithOneArgumentMatched)).toMatchSnapshot();
+    });
+    it('Can handle queries one argument unmatched', async () => {
+      expect(await getRequestQuery(queriesWithOneArgumentUnmatched)).toMatchSnapshot();
+    });
+    it('Can handle queries with one argument matched and alias', async () => {
+      expect(await getRequestQuery(queriesWithOneArgumentMatchedAndAlias)).toMatchSnapshot();
+    });
+    it('Can handle queries with two arguments matched', async () => {
+      expect(await getRequestQuery(queriesWithTwoArgumentsMatched)).toMatchSnapshot();
+    });
+    it('Can handle queries with two arguments unmatched', async () => {
+      expect(await getRequestQuery(queriesWithTwoArgumentsUnmatched)).toMatchSnapshot();
+    });
+    it('Can handle queries with many variations', async () => {
+      expect(await getRequestQuery(queriesWithAllVariations)).toMatchSnapshot();
     });
   });
 

@@ -1,0 +1,72 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`utils createQueryNamesAndAliasesFromASTs Can handle queries one argument matched 1`] = `
+"{
+  thingWithArgsargument1test: thingWithArgs(argument1: \\"test\\") {
+    thingInside
+  }
+}
+"
+`;
+
+exports[`utils createQueryNamesAndAliasesFromASTs Can handle queries one argument unmatched 1`] = `
+"{
+  thingWithArgsargument1test: thingWithArgs(argument1: \\"test\\") {
+    thingInside
+  }
+  thingWithArgsargument1test2: thingWithArgs(argument1: \\"test2\\") {
+    thingInside
+  }
+}
+"
+`;
+
+exports[`utils createQueryNamesAndAliasesFromASTs Can handle queries with many variations 1`] = `
+"{
+  thingWithArgsargument1test: thingWithArgs(argument1: \\"test\\") {
+    thingInside
+    otherThingInside
+  }
+  thingWithArgsargument1test2: thingWithArgs(argument1: \\"test2\\") {
+    thingInside
+  }
+  thingWithArgsargument1noAliasargument2testAgain: thingWithArgs(argument1: \\"noAlias\\", argument2: \\"testAgain\\") {
+    thingInside
+  }
+  thingWithArgsargument1test2argument2testAgain: thingWithArgs(argument1: \\"test2\\", argument2: \\"testAgain\\") {
+    thingInside
+  }
+}
+"
+`;
+
+exports[`utils createQueryNamesAndAliasesFromASTs Can handle queries with one argument matched and alias 1`] = `
+"{
+  thingWithArgsargument1test: thingWithArgs(argument1: \\"test\\") {
+    thingInside
+    otherThingInside
+  }
+}
+"
+`;
+
+exports[`utils createQueryNamesAndAliasesFromASTs Can handle queries with two arguments matched 1`] = `
+"{
+  thingWithArgsargument1noAliasargument2testAgain: thingWithArgs(argument1: \\"noAlias\\", argument2: \\"testAgain\\") {
+    thingInside
+  }
+}
+"
+`;
+
+exports[`utils createQueryNamesAndAliasesFromASTs Can handle queries with two arguments unmatched 1`] = `
+"{
+  thingWithArgsargument1noAliasargument2testAgain: thingWithArgs(argument1: \\"noAlias\\", argument2: \\"testAgain\\") {
+    thingInside
+  }
+  thingWithArgsargument1test2argument2testAgain: thingWithArgs(argument1: \\"test2\\", argument2: \\"testAgain\\") {
+    thingInside
+  }
+}
+"
+`;
