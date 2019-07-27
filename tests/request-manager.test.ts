@@ -39,6 +39,15 @@ const mutation = `
   }
 `;
 
+const mutationWithArrayReturn = `
+  mutation{
+    addTodos(newTodos: [{name: "Testing2", isComplete: false}, {name: "Testing3", isComplete: false}]){
+      name
+      isComplete
+    }
+  }
+`;
+
 describe('Request Manager', () => {
   describe('Query', () => {
     beforeEach(() => {
@@ -207,6 +216,23 @@ describe('Request Manager', () => {
           name: 'Testing',
           isComplete: false,
         },
+      });
+    });
+
+    it('Can do a mutation with an array return ', async () => {
+      const requestManager = new RequestManager(queryTestSchema);
+      const result = await requestManager.createMutation(mutationWithArrayReturn);
+      expect(result).toEqual({
+        addTodos: [
+          {
+            name: 'Testing2',
+            isComplete: false,
+          },
+          {
+            name: 'Testing3',
+            isComplete: false,
+          },
+        ],
       });
     });
 

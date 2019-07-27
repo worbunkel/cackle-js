@@ -9,7 +9,7 @@ A WIP library to batch and optimize graphql queries and mutations
   - [x] Optimizes with query arguments
 - [x] Handles mutations
 - [x] Handles queries that return arrays
-- [ ] Handles mutations that return arrays
+- [x] Handles mutations that return arrays
 
 ### Possible Features Being Explored
 

@@ -126,6 +126,7 @@ export class RequestManager<T extends any> {
     const ASTs = requests.map(request => request.AST);
     const { mutation, names } = createMutationAndNamesFromASTs(ASTs);
     const response = await this.functionToCallWithQuery(mutation);
+    console.log(response);
     const result = _.get(response, 'data');
     if (!result) {
       throw new Error('Response of requestFunction did not match type: { data: any }');

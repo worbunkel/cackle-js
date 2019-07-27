@@ -3,6 +3,7 @@ import { graphql, buildSchema } from 'graphql';
 var schema = buildSchema(`
 type Mutation {
   addTodo(newTodo: NewTodoInput!): Todo!
+  addTodos(newTodos: [NewTodoInput!]!): [Todo!]!
 }
 
 input NewTodoInput {
@@ -48,6 +49,10 @@ class FakeDB {
     this.todos.push(newTodo);
     return newTodo;
   }
+  addTodos(newTodos: Todo[]) {
+    this.todos = this.todos.concat(newTodos);
+    return newTodos;
+  }
   reset() {
     this.todos = getDefaultTodos();
   }
@@ -65,10 +70,19 @@ var root = {
   addTodo: ({ newTodo }: { newTodo: Todo }) => {
     return fakeDB.addTodo(newTodo);
   },
+  addTodos: ({ newTodos }: { newTodos: Todo[] }) => {
+    return fakeDB.addTodos(newTodos);
+  },
 };
 
 export const resetTestDB = () => {
   fakeDB.reset();
 };
 
-export const queryTestSchema = (query: string) => graphql(schema, query, root);
+export const queryTestSchema = async (query: string) => {
+  try {
+    return await graphql(schema, query, root);
+  } catch (err) {
+    console.error(err);
+  }
+};
