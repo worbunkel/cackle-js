@@ -5,7 +5,7 @@ import { print } from 'graphql/language/printer';
 export type Request = {
   AST: any;
   resolve: (value?: any) => void;
-  reject: (val?: any) => void;
+  reject: (reason?: any) => void;
 };
 
 export const createQueryDefinitionGroupsFromASTs = (ASTs: any[]) =>
@@ -14,10 +14,16 @@ export const createQueryDefinitionGroupsFromASTs = (ASTs: any[]) =>
     return _.filter(definitions, definition => _.get(definition, 'operation') === 'query');
   });
 
-export const createSelections = (queryDefinitionGroups: any[][]) =>
-  _.map(queryDefinitionGroups, queryDefinitionGroup =>
-    _.flatMap(queryDefinitionGroup, def => {
-      return def.selectionSet.selections;
+export const createMutationDefinitionGroupsFromASTs = (ASTS: any[]) =>
+  _.map(ASTS, AST => {
+    const definitions = _.get(AST, 'definitions');
+    return _.filter(definitions, definition => _.get(definition, 'operation') === 'mutation');
+  });
+
+export const createSelections = (definitionGroups: any[][]) =>
+  _.map(definitionGroups, definitionGroup =>
+    _.flatMap(definitionGroup, definition => {
+      return definition.selectionSet.selections;
     }),
   );
 
@@ -86,6 +92,44 @@ export const createQueryNamesAndAliasesFromASTs = (ASTs: any[]) => {
   const uniqueNames = createUniqueNames(deepNames);
   const query = createQueryFromUniqueNames(uniqueNames);
   return { query, deepNames, deepAliases };
+};
+
+export const createMutationAndNamesFromASTs = (ASTs: any[]) => {
+  const mutationDefinitionGroups = createMutationDefinitionGroupsFromASTs(ASTs);
+  const selectionGroups = createSelections(mutationDefinitionGroups);
+  const selectionTitles: string[] = [];
+  const selectionTitleGroups = _.map(selectionGroups, selectionGroup =>
+    _.map(selectionGroup, selection => {
+      const selectionAlias = _.get(selection, 'alias.value');
+      const selectionName = _.get(selection, 'name.value');
+      const selectionTitle = selectionAlias || selectionName || '';
+      const numMatchingTitles = _.sumBy(selectionTitles, existingSelectionTitle =>
+        existingSelectionTitle === selectionTitle ? 1 : 0,
+      );
+      selectionTitles.push(selectionTitle);
+      const needsAlias = numMatchingTitles > 0;
+      const newSelectionTitle = numMatchingTitles > 0 ? `${selectionTitle}${numMatchingTitles + 1}` : selectionTitle;
+      if (needsAlias) {
+        _.set(selection, 'alias', {
+          kind: 'Name',
+          value: newSelectionTitle,
+        });
+      }
+      return { title: { original: selectionTitle, new: newSelectionTitle }, mutationString: print(selection) };
+    }),
+  );
+  const newMutation = print(
+    gql(`mutation{
+    ${_.map(_.flatten(selectionTitleGroups), selectionTitleGroup => selectionTitleGroup.mutationString).join('\n')}
+  }`),
+  );
+  const names = _.map(selectionTitleGroups, selectionTitleGroup =>
+    _.map(selectionTitleGroup, selectionTitle => selectionTitle.title),
+  );
+  return {
+    mutation: newMutation,
+    names,
+  };
 };
 
 export const delay = async (durationInMS: number) =>

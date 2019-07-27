@@ -1,15 +1,14 @@
 import {
   createQueryFromUniqueNames,
-  createQueryDefinitionGroups,
+  createQueryDefinitionGroupsFromASTs,
   createSelections,
   createDeepNamesAndAliases,
   delay,
-} from '../dist/utils';
+  createMutationAndNamesFromASTs,
+} from '../src/utils';
 import gql from 'graphql-tag';
 import _ from 'lodash';
 import { RequestManager } from '../src/request-manager';
-import { graphql } from 'graphql';
-import { testSchema } from '../src/test-schema';
 
 const firstQuery = `
   query {
@@ -31,7 +30,8 @@ describe('utils', () => {
           reject: (reason: any) => {},
         },
       ];
-      const queryDefinitionGroups = createQueryDefinitionGroups(requests);
+      const ASTs = _.map(requests, request => request.AST);
+      const queryDefinitionGroups = createQueryDefinitionGroupsFromASTs(ASTs);
       const selections = createSelections(queryDefinitionGroups);
 
       const deepNamesAndAliases = createDeepNamesAndAliases(selections);
@@ -147,6 +147,21 @@ describe('utils', () => {
     });
   });
 
+  describe('createMutationNamesAndAliasesFromASTs', () => {
+    const basicMutation = `
+    mutation{
+      test: addTodo(newTodo: {name: "Testing", isComplete: false}){
+        id
+        name
+        isComplete
+      }
+    }`;
+    it('should handle stuff', () => {
+      const ASTs = [gql(basicMutation), gql(basicMutation)];
+      createMutationAndNamesFromASTs(ASTs);
+    });
+  });
+
   describe('delay', () => {
     const durations = [100, 200, 300, 400, 500, 1000];
     _.each(durations, duration => {
@@ -156,7 +171,7 @@ describe('utils', () => {
         const timeAfter = new Date().getTime();
 
         const difference = timeAfter - timeBefore;
-        expect(difference + 1).toBeGreaterThan(duration);
+        expect(difference).toBeGreaterThanOrEqual(duration);
       });
     });
   });

@@ -1,82 +1,88 @@
-import { GraphQLSchema, GraphQLObjectType, GraphQLString } from 'graphql';
+import { graphql, buildSchema } from 'graphql';
 
-const otherThingType = new GraphQLObjectType({
-  name: 'otherThing',
-  fields: {
-    moreTest: {
-      type: GraphQLString,
-    },
+var schema = buildSchema(`
+type Mutation {
+  addTodo(newTodo: NewTodoInput!): Todo!
+  addTodos(newTodos: [NewTodoInput!]!): [Todo!]!
+}
+
+input NewTodoInput {
+  name: String!
+  isComplete: Boolean!
+}
+
+type Query {
+  todo(name: String!): Todo
+  todos: [Todo!]!
+}
+
+type Todo {
+  name: String!
+  isComplete: Boolean!
+}
+`);
+
+type Todo = {
+  name: string;
+  isComplete: boolean;
+};
+
+const getDefaultTodos = () => [
+  {
+    name: 'Brush Teeth',
+    isComplete: true,
   },
-});
+];
 
-const testType = new GraphQLObjectType({
-  name: 'test',
-  fields: {
-    thing: {
-      type: GraphQLString,
-    },
-    thing2: {
-      type: GraphQLString,
-    },
-    otherThing: {
-      type: otherThingType,
-    },
+class FakeDB {
+  private todos: Todo[] = [];
+  constructor() {
+    this.todos = getDefaultTodos();
+  }
+  getTodos() {
+    return this.todos;
+  }
+  getTodoByName(name: string) {
+    return this.todos.find(todo => todo.name === name);
+  }
+  addTodo(newTodo: Todo) {
+    this.todos.push(newTodo);
+    return newTodo;
+  }
+  addTodos(newTodos: Todo[]) {
+    this.todos = this.todos.concat(newTodos);
+    return newTodos;
+  }
+  reset() {
+    this.todos = getDefaultTodos();
+  }
+}
+
+const fakeDB = new FakeDB();
+
+var root = {
+  todos: () => {
+    return fakeDB.getTodos();
   },
-});
-
-const thingWithArgsType = new GraphQLObjectType({
-  name: 'thingWithArgs',
-  fields: {
-    thingInside: {
-      type: GraphQLString,
-    },
-    otherThingInside: {
-      type: GraphQLString,
-    },
+  todo: ({ name }: { name: string }): Todo | undefined => {
+    return fakeDB.getTodoByName(name);
   },
-});
+  addTodo: ({ newTodo }: { newTodo: Todo }) => {
+    return fakeDB.addTodo(newTodo);
+  },
+  addTodos: ({ newTodos }: { newTodos: Todo[] }) => {
+    return fakeDB.addTodos(newTodos);
+  },
+};
 
-export const testSchema = new GraphQLSchema({
-  query: new GraphQLObjectType({
-    name: 'RootQueryType',
-    fields: {
-      hello: {
-        type: GraphQLString,
-        resolve() {
-          return 'world';
-        },
-      },
-      test: {
-        name: 'test',
-        type: testType,
-        resolve() {
-          return {
-            thing: 'thing',
-            thing2: 'thing2',
-            otherThing: {
-              moreTest: 'otherThing moreTest',
-            },
-          };
-        },
-      },
-      thingWithArgs: {
-        name: 'thingWithArgs',
-        type: thingWithArgsType,
-        args: {
-          argument1: {
-            type: GraphQLString,
-          },
-          argument2: {
-            type: GraphQLString,
-          },
-        },
-        resolve(source, args) {
-          return {
-            thingInside: 'thingInside',
-            otherThingInside: 'otherThingInside',
-          };
-        },
-      },
-    },
-  }),
-});
+export const resetTestDB = () => {
+  fakeDB.reset();
+};
+
+export const queryTestSchema = async (query: string) => {
+  try {
+    return await graphql(schema, query, root);
+  } catch (err) {
+    console.error(err);
+  }
+};

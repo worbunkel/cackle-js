@@ -1,32 +1,51 @@
 import gql from 'graphql-tag';
 import _ from 'lodash';
-import { Request, createQueryNamesAndAliasesFromASTs } from './utils';
+import { Request, createQueryNamesAndAliasesFromASTs, createMutationAndNamesFromASTs } from './utils';
 
-export class RequestManager {
-  requests: Array<Request> = [];
+export class RequestManager<T extends any> {
+  queryRequests: Array<Request> = [];
+  mutationRequests: Array<Request> = [];
   batchDuration: number;
-  interval: NodeJS.Timeout;
-  functionToCallWithQuery: (query: String) => Promise<any>;
+  queryInterval: NodeJS.Timeout;
+  mutationInterval: NodeJS.Timeout;
+  functionToCallWithQuery: (query: String) => Promise<T>;
 
-  constructor(functionToCallWithQuery: (query: String) => Promise<any>, batchDuration: number = 200) {
+  constructor(functionToCallWithQuery: (query: String) => Promise<T>, batchDuration: number = 200) {
     this.functionToCallWithQuery = functionToCallWithQuery;
-    this.requests = [];
     this.batchDuration = batchDuration;
   }
 
-  private resetInterval() {
-    clearInterval(this.interval);
-    this.interval = setTimeout(() => {
-      this.processQueries();
+  private resetQueryInterval() {
+    clearInterval(this.queryInterval);
+    this.queryInterval = setTimeout(() => {
+      this.flushQueryInterval();
     }, this.batchDuration);
   }
 
-  async createQuery(query: any) {
-    this.resetInterval();
+  private flushQueryInterval() {
+    clearInterval(this.queryInterval);
+    this.processQueries();
+  }
+
+  private resetMutationInterval() {
+    clearInterval(this.mutationInterval);
+    this.mutationInterval = setTimeout(() => {
+      this.flushMutationInterval();
+    }, this.batchDuration);
+  }
+
+  private flushMutationInterval() {
+    clearInterval(this.mutationInterval);
+    this.processMutations();
+  }
+
+  async createQuery(query: any): Promise<T> {
+    this.flushMutationInterval();
+    this.resetQueryInterval();
     return new Promise((resolve, reject) => {
       try {
         const AST = gql(query);
-        this.requests.push({
+        this.queryRequests.push({
           AST,
           resolve,
           reject,
@@ -37,12 +56,32 @@ export class RequestManager {
     });
   }
 
+  async createMutation(mutation: string): Promise<T> {
+    this.flushQueryInterval();
+    this.resetMutationInterval();
+    return new Promise((resolve, reject) => {
+      try {
+        const AST = gql(mutation);
+        this.mutationRequests.push({
+          AST,
+          resolve,
+          reject,
+        });
+      } catch (err) {
+        reject(`\nInvalid Mutation:\n${mutation}\n${err}`);
+      }
+    });
+  }
+
   async processQueries() {
-    if (_.size(this.requests) === 0) {
+    if (_.size(this.queryRequests) === 0) {
       return;
     }
 
-    const ASTs = _.map(this.requests, request => request.AST);
+    const requests = this.queryRequests;
+    this.queryRequests = [];
+
+    const ASTs = _.map(requests, request => request.AST);
     const { query, deepNames, deepAliases } = createQueryNamesAndAliasesFromASTs(ASTs);
 
     try {
@@ -57,14 +96,46 @@ export class RequestManager {
         const returnObj = {};
         _.each(deepAliasGroup, (deepAlias, aliasIndex) => {
           const deepName = _.replace(deepNameGroup[aliasIndex], /\:.+\)/g, '');
-          _.set(returnObj, deepAlias, _.get(result, deepName));
+          let deepAliasResult = deepAlias;
+          let deepNameResult = _.get(result, deepName);
+          if (_.isUndefined(deepNameResult)) {
+            const deepNameWithoutLastPeriod = _.initial(_.split(deepName, '.')).join('.');
+            const newDeepNameResult = _.get(result, deepNameWithoutLastPeriod);
+            if (_.isArray(newDeepNameResult) || _.isNull(newDeepNameResult)) {
+              deepAliasResult = _.initial(_.split(deepAlias, '.')).join('.');
+              deepNameResult = newDeepNameResult;
+            }
+          }
+          _.set(returnObj, deepAliasResult, deepNameResult);
         });
-        this.requests[index].resolve(returnObj);
+        requests[index].resolve(returnObj);
       });
     } catch (err) {
-      _.each(this.requests, request => request.reject(err));
+      _.each(requests, request => request.reject(err));
+    }
+  }
+
+  async processMutations() {
+    if (_.size(this.mutationRequests) === 0) {
+      return;
     }
 
-    this.requests = [];
+    const requests = this.mutationRequests;
+    this.mutationRequests = [];
+
+    const ASTs = requests.map(request => request.AST);
+    const { mutation, names } = createMutationAndNamesFromASTs(ASTs);
+    const response = await this.functionToCallWithQuery(mutation);
+    console.log(response);
+    const result = _.get(response, 'data');
+    if (!result) {
+      throw new Error('Response of requestFunction did not match type: { data: any }');
+    }
+    _.each(requests, ({ resolve }, index) => {
+      const originalNames = _.map(names[index], name => name.original);
+      const newNames = _.map(names[index], name => name.new);
+      const resultToReturn = _.zipObject(originalNames, _.map(newNames, name => result[name]));
+      resolve(resultToReturn);
+    });
   }
 }
