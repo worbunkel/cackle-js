@@ -11,6 +11,23 @@ const firstQuery = `
     }
   }
 `;
+
+const arrayQuery1 = `
+  {
+    todos{
+      name
+    }
+  }
+`;
+
+const arrayQuery2 = `
+  {
+    todos{
+      isComplete
+    }
+  }
+`;
+
 const secondQuery = `
   {
     todos {
@@ -84,6 +101,29 @@ describe('Request Manager', () => {
           todos: [
             {
               name: 'Brush Teeth',
+              isComplete: true,
+            },
+          ],
+        },
+      ]);
+    });
+
+    it('Can do two queries and handle arrays correctly', async () => {
+      const requestManager = new RequestManager(queryTestSchema);
+      const result1 = requestManager.createQuery(arrayQuery1);
+      const result2 = requestManager.createQuery(arrayQuery2);
+      const finalResult = await Promise.all([result1, result2]);
+      expect(finalResult).toEqual([
+        {
+          todos: [
+            {
+              name: 'Brush Teeth',
+            },
+          ],
+        },
+        {
+          todos: [
+            {
               isComplete: true,
             },
           ],
@@ -192,17 +232,6 @@ describe('Request Manager', () => {
         await requestManager.createQuery(invalidQuery);
       } catch (err) {
         expect(err).toMatch('Invalid Query');
-      }
-    });
-
-    it('Will throw an error if the request handler function does not return a function in the form of { data: any }', async () => {
-      expect.assertions(1);
-      const badGraphqlRequest = query => Promise.resolve({ query });
-      const requestManager = new RequestManager(badGraphqlRequest, 0);
-      try {
-        await requestManager.createQuery(firstQuery);
-      } catch (err) {
-        expect(err.message).toMatch(/\{ data: any \}/g);
       }
     });
   });

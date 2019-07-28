@@ -86,9 +86,9 @@ export class RequestManager<T extends any> {
 
     try {
       const response = await this.functionToCallWithQuery(query);
-      const result = _.get(response, 'data');
-      if (!result) {
-        throw new Error('Response of requestFunction did not match type: { data: any }');
+      const result = _.get(response, 'data', response);
+      if (_.isNil(result)) {
+        throw new Error('Response of requestFunction is undefined or null');
       }
 
       _.each(deepNames, (deepNameGroup, index) => {
@@ -99,9 +99,25 @@ export class RequestManager<T extends any> {
           let deepAliasResult = deepAlias;
           let deepNameResult = _.get(result, deepName);
           if (_.isUndefined(deepNameResult)) {
-            const deepNameWithoutLastPeriod = _.initial(_.split(deepName, '.')).join('.');
-            const newDeepNameResult = _.get(result, deepNameWithoutLastPeriod);
-            if (_.isArray(newDeepNameResult) || _.isNull(newDeepNameResult)) {
+            const [deepNameWithoutLastPeriod, finalProperty] = [
+              _.initial(_.split(deepName, '.')).join('.'),
+              _.last(_.split(deepName, '.')),
+            ];
+            let newDeepNameResult = _.get(result, deepNameWithoutLastPeriod);
+            if (_.isArray(newDeepNameResult)) {
+              deepAliasResult = _.initial(_.split(deepAlias, '.')).join('.');
+              const oldDeepNameResult = _.get(returnObj, deepAliasResult, []);
+              newDeepNameResult = _.map(newDeepNameResult, (value, index) => {
+                const valueAtFinalProperty = _.get(value, finalProperty);
+                const oldValue = _.get(oldDeepNameResult, index, {});
+                return {
+                  ...oldValue,
+                  [finalProperty]: valueAtFinalProperty,
+                };
+              });
+              deepNameResult = newDeepNameResult;
+            }
+            if (_.isNull(newDeepNameResult)) {
               deepAliasResult = _.initial(_.split(deepAlias, '.')).join('.');
               deepNameResult = newDeepNameResult;
             }
@@ -126,7 +142,6 @@ export class RequestManager<T extends any> {
     const ASTs = requests.map(request => request.AST);
     const { mutation, names } = createMutationAndNamesFromASTs(ASTs);
     const response = await this.functionToCallWithQuery(mutation);
-    console.log(response);
     const result = _.get(response, 'data');
     if (!result) {
       throw new Error('Response of requestFunction did not match type: { data: any }');
