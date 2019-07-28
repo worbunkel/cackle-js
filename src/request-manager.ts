@@ -3,15 +3,15 @@ import _ from 'lodash';
 import { Request, createQueryNamesAndAliasesFromASTs, createMutationAndNamesFromASTs } from './utils';
 
 export class RequestManager<T extends any> {
-  queryRequests: Array<Request> = [];
-  mutationRequests: Array<Request> = [];
-  batchDuration: number;
-  queryInterval: NodeJS.Timeout;
-  mutationInterval: NodeJS.Timeout;
-  functionToCallWithQuery: (query: String) => Promise<T>;
+  private queryRequests: Array<Request> = [];
+  private mutationRequests: Array<Request> = [];
+  private batchDuration: number;
+  private queryInterval: NodeJS.Timeout;
+  private mutationInterval: NodeJS.Timeout;
+  private requestCreator: (query: String) => Promise<T>;
 
-  constructor(functionToCallWithQuery: (query: String) => Promise<T>, batchDuration: number = 200) {
-    this.functionToCallWithQuery = functionToCallWithQuery;
+  constructor(requestCreator: (query: String) => Promise<T>, batchDuration: number = 100) {
+    this.requestCreator = requestCreator;
     this.batchDuration = batchDuration;
   }
 
@@ -39,7 +39,12 @@ export class RequestManager<T extends any> {
     this.processMutations();
   }
 
-  async createQuery(query: any): Promise<T> {
+  flush() {
+    this.flushMutationInterval();
+    this.flushQueryInterval();
+  }
+
+  async createQuery(query: any, flushImmediately = false): Promise<T> {
     this.flushMutationInterval();
     this.resetQueryInterval();
     return new Promise((resolve, reject) => {
@@ -50,13 +55,16 @@ export class RequestManager<T extends any> {
           resolve,
           reject,
         });
+        if (flushImmediately) {
+          this.flush();
+        }
       } catch (err) {
         reject(`\nInvalid Query:\n${query}\n${err}`);
       }
     });
   }
 
-  async createMutation(mutation: string): Promise<T> {
+  async createMutation(mutation: string, flushImmediately = false): Promise<T> {
     this.flushQueryInterval();
     this.resetMutationInterval();
     return new Promise((resolve, reject) => {
@@ -67,13 +75,16 @@ export class RequestManager<T extends any> {
           resolve,
           reject,
         });
+        if (flushImmediately) {
+          this.flush();
+        }
       } catch (err) {
         reject(`\nInvalid Mutation:\n${mutation}\n${err}`);
       }
     });
   }
 
-  async processQueries() {
+  private async processQueries() {
     if (_.size(this.queryRequests) === 0) {
       return;
     }
@@ -85,7 +96,7 @@ export class RequestManager<T extends any> {
     const { query, deepNames, deepAliases } = createQueryNamesAndAliasesFromASTs(ASTs);
 
     try {
-      const response = await this.functionToCallWithQuery(query);
+      const response = await this.requestCreator(query);
       const result = _.get(response, 'data', response);
       if (_.isNil(result)) {
         throw new Error('Response of requestFunction is undefined or null');
@@ -131,7 +142,7 @@ export class RequestManager<T extends any> {
     }
   }
 
-  async processMutations() {
+  private async processMutations() {
     if (_.size(this.mutationRequests) === 0) {
       return;
     }
@@ -141,7 +152,7 @@ export class RequestManager<T extends any> {
 
     const ASTs = requests.map(request => request.AST);
     const { mutation, names } = createMutationAndNamesFromASTs(ASTs);
-    const response = await this.functionToCallWithQuery(mutation);
+    const response = await this.requestCreator(mutation);
     const result = _.get(response, 'data', response);
     if (_.isNil(result)) {
       throw new Error('Response of requestFunction is undefined or null');
