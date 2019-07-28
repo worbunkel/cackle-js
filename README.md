@@ -2,6 +2,15 @@
 
 A WIP library to batch and optimize graphql queries and mutations. I think I just about have all the core
 
+## Usage
+
+### Graphql Request
+
+- Library: [Graphql Request](https://github.com/prisma/graphql-request)
+- Example: [graphql-request.example.ts](./examples/graphql-request/graphql-request.example.ts)
+
+## Features
+
 ### Core Features
 
 - [x] Batch queries together on a set timeout
@@ -22,7 +31,7 @@ A WIP library to batch and optimize graphql queries and mutations. I think I jus
 
 Note: This really is already the case. As long as you can pass a string to your client.
 
-- [ ] Ensure support for GraphQL Request
+- [x] Ensure support for GraphQL Request and add example
 - [ ] Ensure support for FetchQL
 - [ ] Ensure support for URQL
 - [ ] Ensure support for Zeus
