@@ -1,8 +1,9 @@
 {
-  "name": "cackle",
-  "version": "0.0.1",
+  "name": "cackle-js",
+  "version": "0.0.4",
   "description": "A library to batch and optimize graphql queries and mutations",
-  "main": "src/main.ts",
+  "main": "dist/bundle.js",
+  "types": "dist/request-manager.d.ts",
   "scripts": {
     "lint": "npm run prettier && npm run lint-ts",
     "lint-ts": "eslint ./src/**/*.ts",
@@ -11,7 +12,7 @@
     "test-once": "jest --coverage --config=configs/jest.json",
     "build": "tsc --watch",
     "build-once": "tsc",
-    "bundle": "rollup dist/request-manager.js --file dist/bundle.js --format umd --name cackle",
+    "bundle": "rollup dist/request-manager.js --file dist/bundle.js --format umd --name cackle-js",
     "run": "nodemon dist/main.js",
     "run-once": "node dist/main.js"
   },
@@ -48,6 +49,7 @@
     "@typescript-eslint/parser": "^1.12.0",
     "eslint": "^6.0.1",
     "eslint-config-prettier": "^6.0.0",
+    "graphql-zeus": "^1.1.1",
     "jest": "^24.8.0",
     "prettier": "^1.18.2",
     "rollup": "^1.16.6",

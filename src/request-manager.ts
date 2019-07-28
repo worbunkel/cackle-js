@@ -142,9 +142,9 @@ export class RequestManager<T extends any> {
     const ASTs = requests.map(request => request.AST);
     const { mutation, names } = createMutationAndNamesFromASTs(ASTs);
     const response = await this.functionToCallWithQuery(mutation);
-    const result = _.get(response, 'data');
-    if (!result) {
-      throw new Error('Response of requestFunction did not match type: { data: any }');
+    const result = _.get(response, 'data', response);
+    if (_.isNil(result)) {
+      throw new Error('Response of requestFunction is undefined or null');
     }
     _.each(requests, ({ resolve }, index) => {
       const originalNames = _.map(names[index], name => name.original);
