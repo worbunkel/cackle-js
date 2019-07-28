@@ -14,6 +14,8 @@ A WIP library to batch and optimize graphql queries and mutations. I think I jus
 ### Core Features TODO
 
 - [ ] Flesh out tests and organize tests
+- [ ] Add 100% type safety
+- [ ] Add 100% code coverage
 
 ### Features that allow use in any client
 
