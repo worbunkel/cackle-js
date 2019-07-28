@@ -94,11 +94,9 @@ export const createQueryNamesAndAliasesFromASTs = (ASTs: any[]) => {
   return { query, deepNames, deepAliases };
 };
 
-export const createMutationAndNamesFromASTs = (ASTs: any[]) => {
-  const mutationDefinitionGroups = createMutationDefinitionGroupsFromASTs(ASTs);
-  const selectionGroups = createSelections(mutationDefinitionGroups);
+const createMutationSelectionTitleGroups = (selectionGroups: any[][]) => {
   const selectionTitles: string[] = [];
-  const selectionTitleGroups = _.map(selectionGroups, selectionGroup =>
+  return _.map(selectionGroups, selectionGroup =>
     _.map(selectionGroup, selection => {
       const selectionAlias = _.get(selection, 'alias.value');
       const selectionName = _.get(selection, 'name.value');
@@ -118,6 +116,12 @@ export const createMutationAndNamesFromASTs = (ASTs: any[]) => {
       return { title: { original: selectionTitle, new: newSelectionTitle }, mutationString: print(selection) };
     }),
   );
+};
+
+export const createMutationAndNamesFromASTs = (ASTs: any[]) => {
+  const mutationDefinitionGroups = createMutationDefinitionGroupsFromASTs(ASTs);
+  const selectionGroups = createSelections(mutationDefinitionGroups);
+  const selectionTitleGroups = createMutationSelectionTitleGroups(selectionGroups);
   const newMutation = print(
     gql(`mutation{
     ${_.map(_.flatten(selectionTitleGroups), selectionTitleGroup => selectionTitleGroup.mutationString).join('\n')}
