@@ -1,6 +1,6 @@
 {
   "name": "cackle-js",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "A library to batch and optimize graphql queries and mutations",
   "main": "dist/bundle.js",
   "types": "dist/request-manager.d.ts",
@@ -14,7 +14,8 @@
     "build-once": "tsc",
     "bundle": "rollup dist/request-manager.js --file dist/bundle.js --format umd --name cackle-js",
     "run": "nodemon dist/main.js",
-    "run-once": "node dist/main.js"
+    "run-once": "node dist/main.js",
+    "prepublishOnly": "npm run bundle"
   },
   "repository": {
     "type": "git",
