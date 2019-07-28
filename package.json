@@ -37,7 +37,8 @@
   "dependencies": {
     "graphql": "^14.4.2",
     "graphql-request": "^1.8.2",
-    "graphql-tag": "^2.10.1"
+    "graphql-tag": "^2.10.1",
+    "lodash": "^4.17.15"
   },
   "devDependencies": {
     "@types/graphql": "^14.2.2",
