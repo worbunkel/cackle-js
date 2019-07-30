@@ -8,9 +8,9 @@ export class RequestManager<T extends any> {
   private batchDuration: number;
   private queryInterval: NodeJS.Timeout;
   private mutationInterval: NodeJS.Timeout;
-  private requestCreator: (query: String) => Promise<T>;
+  private requestCreator: (query: string) => Promise<T>;
 
-  constructor(requestCreator: (query: String) => Promise<T>, batchDuration: number = 100) {
+  constructor(requestCreator: (query: string) => Promise<T>, batchDuration: number = 100) {
     this.requestCreator = requestCreator;
     this.batchDuration = batchDuration;
   }
