@@ -84,6 +84,7 @@ export class RequestManager<T extends any> {
     });
   }
 
+  // TODO: HOLY COW THIS IS GROSS
   private async processQueries() {
     if (_.size(this.queryRequests) === 0) {
       return;
@@ -103,37 +104,100 @@ export class RequestManager<T extends any> {
       }
 
       _.each(deepNames, (deepNameGroup, index) => {
-        const deepAliasGroup = deepAliases[index];
+        let arrayDeepNames: string[] = [];
         const returnObj = {};
+        deepNameGroup = _.orderBy(deepNameGroup, name => _.size(_.split(name, '.')));
+        const deepAliasGroup = _.orderBy(deepAliases[index], name => _.size(_.split(name, '.')));
         _.each(deepAliasGroup, (deepAlias, aliasIndex) => {
           const deepName = _.replace(deepNameGroup[aliasIndex], /\:.+\)/g, '');
           let deepAliasResult = deepAlias;
           let deepNameResult = _.get(result, deepName);
           if (_.isUndefined(deepNameResult)) {
-            const [deepNameWithoutLastPeriod, finalProperty] = [
-              _.initial(_.split(deepName, '.')).join('.'),
-              _.last(_.split(deepName, '.')),
-            ];
-            let newDeepNameResult = _.get(result, deepNameWithoutLastPeriod);
-            if (_.isArray(newDeepNameResult)) {
-              deepAliasResult = _.initial(_.split(deepAlias, '.')).join('.');
-              const oldDeepNameResult = _.get(returnObj, deepAliasResult, []);
-              newDeepNameResult = _.map(newDeepNameResult, (value, index) => {
-                const valueAtFinalProperty = _.get(value, finalProperty);
-                const oldValue = _.get(oldDeepNameResult, index, {});
-                return {
-                  ...oldValue,
-                  [finalProperty]: valueAtFinalProperty,
-                };
-              });
-              deepNameResult = newDeepNameResult;
-            }
-            if (_.isNull(newDeepNameResult)) {
-              deepAliasResult = _.initial(_.split(deepAlias, '.')).join('.');
-              deepNameResult = newDeepNameResult;
-            }
+            const foundArrayDeepNames = _.orderBy(
+              _.filter(arrayDeepNames, arrayDeepName => _.includes(deepName, arrayDeepName)),
+              val => _.size(_.split(val, ',')),
+            );
+            const deepNameWithoutLastPeriod = _.initial(_.split(deepName, '.')).join('.');
+            const arraysToCheck = [...foundArrayDeepNames, deepNameWithoutLastPeriod];
+            const handleArrayDeepNames = (
+              arrayDeepNamesToHandle: string[],
+              currentValue?: any,
+              earlierValues: string[] = [],
+              earlierAliases: string[] = [],
+            ) => {
+              const filteredArrayDeepNamesToHandle = _.reject(arrayDeepNamesToHandle, name =>
+                _.some(earlierValues, earlierValue => _.includes(earlierValue, name)),
+              );
+              if (_.isEmpty(filteredArrayDeepNamesToHandle)) {
+                return;
+              }
+              const foundArrayDeepName = _.first(arrayDeepNamesToHandle);
+              const numberOfPeriods = _.size(_.split(foundArrayDeepName, '.')) - 1;
+              const finalProperty = _.tail(_.split(_.replace(deepName, foundArrayDeepName, ''), '.')).join('.');
+              const earlierValuesPath =
+                earlierValues.join('.') +
+                '.' +
+                _.slice(_.split(foundArrayDeepName, '.'), _.size(earlierValues)).join('.');
+              const foundArrayDeepNameResult = _.get(result, foundArrayDeepName);
+              const earlierValuesPathResult = _.get(result, earlierValuesPath);
+              let newDeepNameResult = !_.isUndefined(foundArrayDeepNameResult)
+                ? foundArrayDeepNameResult
+                : !_.isUndefined(earlierValuesPathResult)
+                ? earlierValuesPathResult
+                : undefined;
+              const splitEarlierAliases = _.split(deepAlias, '.');
+              const resultingEarlierAlias = _.map(_.split(earlierValuesPath, '.'), (value, index) => {
+                const earlierAliasValue = _.replace(splitEarlierAliases[index], /\[.+\]/, '');
+                const bracketsValue = _.get(/\[.+\]/.exec(value), '[0]');
+                if (bracketsValue) {
+                  return earlierAliasValue + bracketsValue;
+                }
+                return earlierAliasValue;
+              }).join('.');
+              if (_.isArray(newDeepNameResult)) {
+                arrayDeepNames = _.uniq(_.concat(arrayDeepNames, foundArrayDeepName));
+                deepAliasResult = _.slice(_.split(deepAlias, '.'), 0, numberOfPeriods + 1).join('.');
+
+                const oldDeepNameResult =
+                  _.get(returnObj, deepAliasResult) ||
+                  _.get(currentValue, deepAliasResult) ||
+                  _.get(returnObj, resultingEarlierAlias) ||
+                  [];
+                let useDeepAliasResult = newDeepNameResult === _.get(result, earlierValuesPath);
+                newDeepNameResult = _.map(newDeepNameResult, (value, index) => {
+                  const valueAtFinalProperty = _.get(value, finalProperty);
+                  const oldValue = _.cloneDeep(_.get(oldDeepNameResult, index, {}));
+                  _.set(oldValue, finalProperty, valueAtFinalProperty);
+                  return oldValue;
+                });
+                deepNameResult = newDeepNameResult;
+                if (useDeepAliasResult) {
+                  deepAliasResult = resultingEarlierAlias;
+                  if (!_.isUndefined(deepNameResult)) {
+                    _.set(returnObj, deepAliasResult, deepNameResult);
+                  }
+                }
+                _.each(newDeepNameResult, (value, index) =>
+                  handleArrayDeepNames(
+                    _.tail(arrayDeepNamesToHandle),
+                    value,
+                    [...earlierValues, foundArrayDeepName + '[' + index + ']'],
+                    [...earlierAliases, resultingEarlierAlias + '[' + index + ']'],
+                  ),
+                );
+              } else if (_.isNull(newDeepNameResult)) {
+                deepAliasResult = _.initial(_.split(deepAlias, '.')).join('.');
+                deepNameResult = newDeepNameResult;
+                if (!_.isUndefined(newDeepNameResult)) {
+                  _.set(returnObj, deepAliasResult, deepNameResult);
+                }
+              }
+            };
+            handleArrayDeepNames(arraysToCheck);
           }
-          _.set(returnObj, deepAliasResult, deepNameResult);
+          if (!_.isUndefined(deepNameResult)) {
+            _.set(returnObj, deepAliasResult, deepNameResult);
+          }
         });
         requests[index].resolve(returnObj);
       });

@@ -47,6 +47,22 @@ const secondQuery = `
   }
 `;
 
+const deepQuery = `
+{
+  todos {
+    user {
+      firstName
+      lastName
+      todos{
+        name
+        isComplete
+      }
+    }
+    name
+    isComplete
+  }
+}`;
+
 const mutation = `
   mutation{
     addTodo(newTodo: {name: "Testing", isComplete: false}){
@@ -65,6 +81,19 @@ const mutationWithArrayReturn = `
   }
 `;
 
+const mutationWithDeepArrayReturn = `
+  mutation{
+    addTodos(newTodos: [{name: "Testing2", isComplete: false, user: { firstName: "Deep", lastName: "Mutation"}}, {name: "Testing3", isComplete: false, user: { firstName: "Deep", lastName: "Mutation2"}}]){
+      name
+      isComplete
+      user{
+        firstName
+        lastName
+      }
+    }
+  }
+`;
+
 describe('Request Manager', () => {
   describe('Query', () => {
     beforeEach(() => {
@@ -78,6 +107,47 @@ describe('Request Manager', () => {
           {
             name: 'Brush Teeth',
             isComplete: true,
+          },
+          {
+            name: 'Do Chores',
+            isComplete: false,
+          },
+        ],
+      });
+    });
+
+    it('Can do a deep query', async () => {
+      const requestManager = new RequestManager(queryTestSchema);
+      const result = await requestManager.createQuery(deepQuery);
+      expect(result).toEqual({
+        todos: [
+          {
+            name: 'Brush Teeth',
+            isComplete: true,
+            user: {
+              firstName: 'Test',
+              lastName: 'User',
+              todos: [
+                {
+                  name: 'Brush Teeth',
+                  isComplete: true,
+                },
+              ],
+            },
+          },
+          {
+            name: 'Do Chores',
+            isComplete: false,
+            user: {
+              firstName: 'Test',
+              lastName: 'User2',
+              todos: [
+                {
+                  name: 'Do Chores',
+                  isComplete: false,
+                },
+              ],
+            },
           },
         ],
       });
@@ -95,6 +165,10 @@ describe('Request Manager', () => {
               name: 'Brush Teeth',
               isComplete: true,
             },
+            {
+              name: 'Do Chores',
+              isComplete: false,
+            },
           ],
         },
         {
@@ -102,6 +176,10 @@ describe('Request Manager', () => {
             {
               name: 'Brush Teeth',
               isComplete: true,
+            },
+            {
+              name: 'Do Chores',
+              isComplete: false,
             },
           ],
         },
@@ -119,12 +197,18 @@ describe('Request Manager', () => {
             {
               name: 'Brush Teeth',
             },
+            {
+              name: 'Do Chores',
+            },
           ],
         },
         {
           todos: [
             {
               isComplete: true,
+            },
+            {
+              isComplete: false,
             },
           ],
         },
@@ -193,6 +277,10 @@ describe('Request Manager', () => {
               name: 'Brush Teeth',
               isComplete: true,
             },
+            {
+              name: 'Do Chores',
+              isComplete: false,
+            },
           ],
         },
         {
@@ -200,6 +288,10 @@ describe('Request Manager', () => {
             {
               name: 'Brush Teeth',
               isComplete: true,
+            },
+            {
+              name: 'Do Chores',
+              isComplete: false,
             },
           ],
         },
@@ -260,6 +352,32 @@ describe('Request Manager', () => {
           {
             name: 'Testing3',
             isComplete: false,
+          },
+        ],
+      });
+    });
+
+    it('Can do a mutation with a deep array return ', async () => {
+      const requestManager = new RequestManager(queryTestSchema);
+      const result = await requestManager.createMutation(mutationWithDeepArrayReturn);
+      console.log({ result });
+      expect(result).toEqual({
+        addTodos: [
+          {
+            name: 'Testing2',
+            isComplete: false,
+            user: {
+              firstName: 'Deep',
+              lastName: 'Mutation',
+            },
+          },
+          {
+            name: 'Testing3',
+            isComplete: false,
+            user: {
+              firstName: 'Deep',
+              lastName: 'Mutation2',
+            },
           },
         ],
       });

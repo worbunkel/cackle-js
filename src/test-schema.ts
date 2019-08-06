@@ -1,4 +1,4 @@
-import { graphql, buildSchema } from 'graphql';
+import { graphql, buildSchema, printSchema } from 'graphql';
 
 var schema = buildSchema(`
 type Mutation {
@@ -9,6 +9,12 @@ type Mutation {
 input NewTodoInput {
   name: String!
   isComplete: Boolean!
+  user: NewUserInput
+}
+
+input NewUserInput {
+  firstName: String!
+  lastName: String!
 }
 
 type Query {
@@ -19,18 +25,57 @@ type Query {
 type Todo {
   name: String!
   isComplete: Boolean!
+  user: User!
+}
+
+type User {
+  firstName: String!
+  lastName: String!
+  todos: [Todo!]!
 }
 `);
+
+console.log(printSchema(schema));
+
+type User = {
+  firstName: string;
+  lastName: string;
+};
 
 type Todo = {
   name: string;
   isComplete: boolean;
+  user: User;
 };
 
 const getDefaultTodos = () => [
   {
     name: 'Brush Teeth',
     isComplete: true,
+    user: {
+      firstName: 'Test',
+      lastName: 'User',
+      todos: [
+        {
+          name: 'Brush Teeth',
+          isComplete: true,
+        },
+      ],
+    },
+  },
+  {
+    name: 'Do Chores',
+    isComplete: false,
+    user: {
+      firstName: 'Test',
+      lastName: 'User2',
+      todos: [
+        {
+          name: 'Do Chores',
+          isComplete: false,
+        },
+      ],
+    },
   },
 ];
 
