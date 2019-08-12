@@ -73,6 +73,13 @@ describe('utils', () => {
     }
     `;
 
+    const queryWithOneNumberArgument = `
+    {
+      thingWithArgs(argument1: 1){
+        thingInside
+      }
+    }`;
+
     const queryWithOneArgument2 = `
     {
       thingWithArgs(argument1: "test2"){
@@ -145,6 +152,9 @@ describe('utils', () => {
     it('Can handle queries with many variations', async () => {
       expect(await getRequestQuery(queriesWithAllVariations)).toMatchSnapshot();
     });
+    it('Can handle queries with number arguments', async () => {
+      expect(await getRequestQuery([queryWithOneNumberArgument])).toMatchSnapshot();
+    })
   });
 
   describe('createMutationNamesAndAliasesFromASTs', () => {

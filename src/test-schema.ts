@@ -1,4 +1,4 @@
-import { graphql, buildSchema, printSchema } from 'graphql';
+import { graphql, buildSchema } from 'graphql';
 
 var schema = buildSchema(`
 type Mutation {
@@ -34,8 +34,6 @@ type User {
   todos: [Todo!]!
 }
 `);
-
-console.log(printSchema(schema));
 
 type User = {
   firstName: string;

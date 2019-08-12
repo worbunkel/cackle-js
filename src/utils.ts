@@ -31,7 +31,10 @@ const createArgumentsName = (selection: any) => {
   if (_.size(selection.arguments) > 0) {
     return `(${_.map(
       selection.arguments,
-      argument => `${argument.name.value}:${JSON.stringify(argument.value.value)}`,
+      argument =>
+        `${argument.name.value}:${
+          argument.value.kind === 'IntValue' ? argument.value.value : JSON.stringify(argument.value.value)
+        }`,
     )})`;
   }
   return '';

@@ -40,6 +40,15 @@ exports[`utils createQueryNamesAndAliasesFromASTs Can handle queries with many v
 "
 `;
 
+exports[`utils createQueryNamesAndAliasesFromASTs Can handle queries with number arguments 1`] = `
+"{
+  thingWithArgsargument11: thingWithArgs(argument1: 1) {
+    thingInside
+  }
+}
+"
+`;
+
 exports[`utils createQueryNamesAndAliasesFromASTs Can handle queries with one argument matched and alias 1`] = `
 "{
   thingWithArgsargument1test: thingWithArgs(argument1: \\"test\\") {
