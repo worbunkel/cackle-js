@@ -377,7 +377,6 @@ describe('Request Manager', () => {
     it('Can do a mutation with a deep array return ', async () => {
       const requestManager = new RequestManager(queryTestSchema);
       const result = await requestManager.createMutation(mutationWithDeepArrayReturn);
-      console.log({ result });
       expect(result).toEqual({
         addTodos: [
           {

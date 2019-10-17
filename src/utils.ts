@@ -82,7 +82,7 @@ export const createUniqueNames = (deepNames: string[]) => _.uniq(_.flatten(deepN
 export const createQueryFromUniqueNames = (uniqueNames: any[]) => {
   const newQueryObject = {};
   const uniqueNamesWithoutPeriodsInQuotes = uniqueNames.map(name =>
-    _.replace(name, /(?<=\B"[^"]*)\.(?=[^"]*"\B)/g, '{%PERIOD%}'),
+    _.replace(name, /("[^",]+)\.([^"]+")/g, '$1{%PERIOD%}$2'),
   );
   _.each(uniqueNamesWithoutPeriodsInQuotes, uniqueName => _.set(newQueryObject, uniqueName, ''));
   const newQuery = printObjectQuery(newQueryObject);

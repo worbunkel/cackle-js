@@ -1,6 +1,6 @@
 {
   "name": "cackle-js",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "A library to batch and optimize graphql queries and mutations",
   "main": "dist/bundle.js",
   "types": "dist/request-manager.d.ts",
