@@ -10,7 +10,7 @@ A lightweight library to batch and optimize graphql queries and mutations.
   - [Zeus](#zeus)
 - [Todo/Roadmap (In descending priority)](#todoroadmap-in-descending-priority)
 - [License](#license)
-- [Special Thanks](#special-thanks))
+- [Special Thanks](#special-thanks)
 
 ## Usage
 

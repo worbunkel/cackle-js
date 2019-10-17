@@ -81,11 +81,15 @@ export const createUniqueNames = (deepNames: string[]) => _.uniq(_.flatten(deepN
 
 export const createQueryFromUniqueNames = (uniqueNames: any[]) => {
   const newQueryObject = {};
-  _.each(uniqueNames, uniqueName => _.set(newQueryObject, uniqueName, ''));
+  const uniqueNamesWithoutPeriodsInQuotes = uniqueNames.map(name =>
+    _.replace(name, /(?<=\B"[^"]*)\.(?=[^"]*"\B)/g, '{%PERIOD%}'),
+  );
+  _.each(uniqueNamesWithoutPeriodsInQuotes, uniqueName => _.set(newQueryObject, uniqueName, ''));
   const newQuery = printObjectQuery(newQueryObject);
   const finalAST = gql(newQuery);
   const query = print(finalAST as any);
-  return query;
+  const queryWithPeriodsBack = _.replace(query, /{%PERIOD%}/g, '.');
+  return queryWithPeriodsBack;
 };
 
 export const createQueryNamesAndAliasesFromASTs = (ASTs: any[]) => {

@@ -47,6 +47,15 @@ const secondQuery = `
   }
 `;
 
+const emailQuery = `
+  {
+    todo(name: "test@test.com"){
+      name
+      isComplete
+    }
+  }
+`;
+
 const deepQuery = `
 {
   todos {
@@ -113,6 +122,14 @@ describe('Request Manager', () => {
             isComplete: false,
           },
         ],
+      });
+    });
+
+    it('Can do a query with an email', async () => {
+      const requestManager = new RequestManager(queryTestSchema);
+      const result = await requestManager.createQuery(emailQuery);
+      expect(result).toEqual({
+        todo: null,
       });
     });
 

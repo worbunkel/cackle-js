@@ -154,7 +154,7 @@ describe('utils', () => {
     });
     it('Can handle queries with number arguments', async () => {
       expect(await getRequestQuery([queryWithOneNumberArgument])).toMatchSnapshot();
-    })
+    });
   });
 
   describe('createMutationNamesAndAliasesFromASTs', () => {
