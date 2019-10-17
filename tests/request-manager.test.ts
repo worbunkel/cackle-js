@@ -49,7 +49,7 @@ const secondQuery = `
 
 const emailQuery = `
   {
-    todo(name: "test@test.com"){
+    todo(name: "test.tester@test.com"){
       name
       isComplete
     }

@@ -81,9 +81,14 @@ export const createUniqueNames = (deepNames: string[]) => _.uniq(_.flatten(deepN
 
 export const createQueryFromUniqueNames = (uniqueNames: any[]) => {
   const newQueryObject = {};
-  const uniqueNamesWithoutPeriodsInQuotes = uniqueNames.map(name =>
-    _.replace(name, /("[^",]+)\.([^"]+")/g, '$1{%PERIOD%}$2'),
-  );
+  let uniqueNamesWithoutPeriodsInQuotes: any[] = _.cloneDeep(uniqueNames);
+  let oldUniqueNamesWithoutPeriodsInQuotes: any[] = [];
+  while (!_.isEqual(uniqueNamesWithoutPeriodsInQuotes, oldUniqueNamesWithoutPeriodsInQuotes)) {
+    oldUniqueNamesWithoutPeriodsInQuotes = _.cloneDeep(uniqueNamesWithoutPeriodsInQuotes);
+    uniqueNamesWithoutPeriodsInQuotes = uniqueNamesWithoutPeriodsInQuotes.map(name =>
+      _.replace(name, /("[^",]+)\.([^"]+")/g, '$1{%PERIOD%}$2'),
+    );
+  }
   _.each(uniqueNamesWithoutPeriodsInQuotes, uniqueName => _.set(newQueryObject, uniqueName, ''));
   const newQuery = printObjectQuery(newQueryObject);
   const finalAST = gql(newQuery);
